@@ -18,9 +18,7 @@ body {
   border-radius:10px;
   background:#1b1b1b;
 }
-.lock {
-  opacity:0.5;
-}
+.lock { opacity:0.6; }
 button {
   margin-top:10px;
   padding:10px 15px;
@@ -34,17 +32,10 @@ button {
 <body>
 
 <h1>🔮 Your Taro</h1>
-
 <div id="decks"></div>
 
 <script>
 const tg = window.Telegram ? Telegram.WebApp : null;
-
-// безопасное получение userId
-const userId =
-  tg?.initDataUnsafe?.user?.id ||
-  tg?.initDataUnsafe?.chat?.id ||
-  Math.floor(Math.random() * 1000000000);
 
 const decks = [
   { id:'classic', name:'Classic Tarot', free:true },
@@ -54,28 +45,22 @@ const decks = [
 
 function loadDecks() {
   const container = document.getElementById('decks');
-  if (!container) return;
-
   container.innerHTML = '';
 
   decks.forEach(deck => {
     const div = document.createElement('div');
     div.className = 'deck';
-
     if (!deck.free) div.classList.add('lock');
 
-    const title = document.createElement('h3');
-    title.innerText = deck.name;
-    div.appendChild(title);
-
+    div.innerHTML = `<h3>${deck.name}</h3>`;
     const btn = document.createElement('button');
 
     if (deck.free) {
       btn.innerText = '🔮 Открыть';
-      btn.onclick = () => alert('Расклад (пока заглушка)');
+      btn.onclick = () => alert('Бесплатный расклад');
     } else {
       btn.innerText = '🔓 Открыть за 1 ⭐';
-      btn.onclick = () => alert('Покупка колоды');
+      btn.onclick = () => tg.sendData(`BUY_DECK_${deck.id}`);
     }
 
     div.appendChild(btn);
@@ -83,9 +68,11 @@ function loadDecks() {
   });
 }
 
-// ВАЖНО: ждём готовности DOM
 document.addEventListener('DOMContentLoaded', () => {
   loadDecks();
   tg?.ready();
 });
 </script>
+
+</body>
+</html>
