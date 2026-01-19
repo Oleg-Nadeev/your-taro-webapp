@@ -1,58 +1,95 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Your Taro</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      background: #0e0e0e;
-      color: #fff;
-      font-family: Arial;
-      text-align: center;
-      padding: 40px;
-    }
-    button {
-      padding: 15px 25px;
-      font-size: 18px;
-      border: none;
-      border-radius: 10px;
-      background: #6b4eff;
-      color: white;
-      cursor: pointer;
-    }
-    .card {
-      margin-top: 30px;
-      font-size: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Your Taro</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body {
+  background:#0e0e0e;
+  color:#fff;
+  font-family:Arial;
+  text-align:center;
+  padding:30px;
+}
+.deck {
+  margin:15px;
+  padding:15px;
+  border-radius:10px;
+  background:#1b1b1b;
+}
+.lock {
+  opacity:0.5;
+}
+button {
+  margin-top:10px;
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  background:#6b4eff;
+  color:#fff;
+}
+</style>
 </head>
 <body>
 
 <h1>🔮 Your Taro</h1>
-<p>Нажми, чтобы получить карту дня</p>
 
-<button onclick="drawCard()">Вытянуть карту</button>
-
-<div class="card" id="result"></div>
+<div id="decks"></div>
 
 <script>
-const cards = [
-  { name: "Шут", text: "Новый путь, спонтанность, свобода" },
-  { name: "Маг", text: "Сила воли, контроль, инициатива" },
-  { name: "Верховная Жрица", text: "Интуиция, тайна, скрытое" },
-  { name: "Императрица", text: "Любовь, забота, рост" },
-  { name: "Император", text: "Структура, власть, стабильность" }
+const tg = Telegram.WebApp;
+const userId = tg.initDataUnsafe.user.id;
+
+const decks = [
+  { id:'classic', name:'Classic Tarot', free:true },
+  { id:'dark', name:'Dark Tarot', free:false },
+  { id:'love', name:'Love Tarot', free:false }
 ];
 
-function drawCard() {
-  const card = cards[Math.floor(Math.random() * cards.length)];
-  document.getElementById("result").innerHTML =
-    `<h2>${card.name}</h2><p>${card.text}</p>`;
+async function loadDecks() {
+  const res = await fetch('http://localhost:3000/check-vip', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ userId })
+  });
+  const data = await res.json();
+
+  const container = document.getElementById('decks');
+  container.innerHTML = '';
+
+  decks.forEach(deck => {
+    const div = document.createElement('div');
+    div.className = 'deck';
+
+    if (!deck.free && !data.vip) div.classList.add('lock');
+
+    div.innerHTML = `<h3>${deck.name}</h3>`;
+
+    if (deck.free || data.vip) {
+      const btn = document.createElement('button');
+      btn.innerText = 'Открыть';
+      btn.onclick = () => alert('Тут будет расклад');
+      div.appendChild(btn);
+    } else {
+      const btn = document.createElement('button');
+      btn.innerText = '🔓 1 ⭐';
+      btn.onclick = () => tg.showPopup({
+        title:'Покупка',
+        message:'Купи колоду за 1 ⭐ в чате',
+        buttons:[{ type:'close' }]
+      });
+      div.appendChild(btn);
+    }
+
+    container.appendChild(div);
+  });
 }
 
-Telegram.WebApp.ready();
+loadDecks();
+tg.ready();
 </script>
 
 </body>
 </html>
+
